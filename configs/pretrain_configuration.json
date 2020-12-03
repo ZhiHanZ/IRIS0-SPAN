@@ -1,0 +1,36 @@
+{
+  "network_dataset_lut": {
+    "Pristine_Medifor1024": "../prepare-pristine//merged",
+    "Pristine_dresden256": "../Dresden/LMDB",
+    "Pristine_highStdDresden256": "../Dresden/highStdLMDB",
+    "Pristine_medifor256": "../highProv/media/stdLMDB",
+    "Pristine_highStdMedifor256": "../highProv/media/highStdLMDB",
+    "Inpaint_medifor256": "../syntehsize-inpaint/Medifor/merged",
+    "Inpaint_imageNet256": "../syntehsize-inpaint/ImageNet/merged/",
+    "Copymove_PercSUN256": "../CopyMove/Perc10_LMDB",
+    "Copymove_AffineSun256": "../CopyMove/SUN-Affine",
+    "Copymove_AfffineCOCO256": "../CopyMove/COCO-Affine",
+    "Copymove_USCISI1024": "../CopyMove/Composite_LMDB",
+    "Splicing_columbia1024": "../syntehsize-columbia-splice//merged",
+    "Splicing_SUN256Test": "../DMVN/splicing-DMVNv1_USCISI/testing/",
+    "Splicing_SUN256Train": "../DMVN/splicing-DMVNv1_USCISI/training/",
+    "Splicing_COCO256Train": "../DMVN/DMVN-Positive/Train/",
+    "Splicing_COCO256Test": "../DMVN/DMVN-Positive/Test/"
+  },
+  "7dataset": [
+    "Pristine_Medifor1024-random",
+    "Pristine_highStdDresden256-crop",
+    "Inpaint_medifor256-crop",
+    "Copymove_USCISI1024-random",
+    "Copymove_AffineSun256-crop",
+    "Splicing_columbia1024-random",
+    "Splicing_SUN256Test-crop"
+  ],
+  "5dataset": [
+    "Pristine_highStdMedifor256-crop",
+    "Inpaint_medifor256-crop",
+    "Splicing_columbia1024-random",
+    "Copymove_AffineSun256-crop",
+    "Splicing_SUN256Test-crop"
+  ]
+}

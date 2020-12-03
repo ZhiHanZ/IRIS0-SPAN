@@ -1,0 +1,24 @@
+{
+    "Project_Setting":{
+        "manTraNet_root":"../",
+        "srcDir":"src",
+        "modelDir":"pretrained_weights",
+        "data_dir":"data",
+        "baselinename":"lstm_original_0",
+        "baselineIndex":0,
+	"description":"original model test"
+    },
+    "Encoder_stack":{
+        "n_encoder": 2,
+        "n_heads":4,
+        "useBN":true,
+        "ksize":7
+    },
+    "Decoder_stack":{
+        "n_decoder":2,
+        "n_heads":4,
+        "useBN":true,
+        "ksize":7
+    },
+    "Test Result":"Coverage: loss/0.3104, AUC/0.8479, F1/0.3707; Columbia: loss/1.2204, AUC/0.9448, F1/0.4819"
+}

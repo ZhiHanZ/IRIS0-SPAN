@@ -1,0 +1,24 @@
+{
+    "Project_Setting":{
+        "manTraNet_root":"../ManTraNet",
+        "srcDir":"src",
+        "modelDir":"pretrained_weights",
+        "data_dir":"data",
+        "baselinename":"PixelAttention_1",
+        "baselineIndex":23,
+	"description":"multihead=2"
+    },
+    "Encoder_stack":{
+        "n_encoder": 2,
+        "n_heads":4,
+        "useBN":true,
+        "ksize":7
+    },
+    "Decoder_stack":{
+        "n_decoder":2,
+        "n_heads":4,
+        "useBN":true,
+        "ksize":7
+    },
+    "Test Result":"Columbia: loss/?, AUC/?, F1/?. Coverage: loss/?, AUC/?, F1/?"
+}
