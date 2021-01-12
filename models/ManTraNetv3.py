@@ -19,9 +19,10 @@ from utils.metrics import np_F1
 from utils.metrics import np_ap
 from utils.metrics import np_auc
 from utils.metrics import np_F1_k
-from layers import Encoder, Decoder, PixelAttention as pa, MultiHeadPixelAttention as mpa
 from utils.image_utils import read_rgb_image, decode_an_image_file, postprocess
 from layers.MyLayers import *
+import layers.PixelAttention as pa
+import layers.MultiHeadPixelAttention as mpa
 from datasets.coverage import prepare_coverage_dataset
 
 
@@ -59,8 +60,6 @@ class ManTraNet:
         #self.bs=baseline_funcs("config.json")
         self.baselinename=self.setting["baselinename"]
         
-        self.encoder= Encoder.Encoder(config_fileName)
-        self.decoder= Decoder.Decoder(config_fileName)
         
     def get_Featex(self,trainable=False):
         type_idx = self.IMC_model_idx if self.IMC_model_idx < 4 else 2
@@ -189,7 +188,7 @@ class ManTraNet:
         model=Model( inputs=img_in, outputs=pred_out, name='sigNet')
         model.load_weights(self.weight_file,by_name=True)
         return model
-
+'''
     def get_model_0106(self, layers_steps=[1,3,9,27,81]):
         img_in = Input(shape=(None,None,3), name='img_in')
         Featex=self.get_Featex()
@@ -202,7 +201,6 @@ class ManTraNet:
             t = pa.PixelAttention(shift=step, useBN=False)(t)
             arr.append(t)
         attention_pool_layer = Lambda( lambda t : tf.stack(t, axis=1), name='attention_pool')( arr )
-        print(attention_pool_layer.shape)
         devf = ConvLSTM2D( 8, (7,7),
                        activation='tanh',
                        recurrent_activation='hard_sigmoid',
@@ -238,112 +236,4 @@ class ManTraNet:
         model=Model( inputs=img_in, outputs=pred_out, name='sigNet')
         model.load_weights(self.weight_file,by_name=True)
         return model
-    def get_model_0202(self, layers_steps=[1,3,9,27,81]):
-        img_in = Input(shape=(None,None,3), name='img_in')
-        Featex=self.get_Featex()
-        rf=Featex(img_in)
-        rf = Conv2D( 32, (1,1), activation=None, use_bias=False, kernel_constraint = unit_norm( axis=-2 ),
-                 name='outlierTrans_new', padding = 'same' )(rf)
-        t = rf
-        arr = []
-        for step in layers_steps:
-            t = pa.PixelAttention(shift=step, useBN=False)(t)
-            arr.append(t)
-        attention_pool_layer = Lambda( lambda t : tf.stack(t, axis=1), name='attention_pool')( arr )
-        print(attention_pool_layer.shape)
-        devf = ConvLSTM2D( 8, (7,7),
-                       activation='tanh',
-                       recurrent_activation='hard_sigmoid',
-                       padding='same',
-                       name='cLSTM_t', 
-                       return_sequences=False )(attention_pool_layer)
-        pred_out = Conv2D(1, (7,7), padding='same', activation='sigmoid', name='pred_t')( devf )
-        print(pred_out.shape)
-        model=Model( inputs=img_in, outputs=pred_out, name='sigNet')
-        model.load_weights(self.weight_file,by_name=True)
-        return model
-    def get_model_0903(self): # 2 encoders and 2 decoders and 4 h••••••••••••••••••eaders
-        img_in = Input(shape=(None,None,3), name='img_in')
-        Featex=self.get_Featex()
-        rf=Featex(img_in)
-        rf = Conv2D( 32, (1,1), activation=None, use_bias=False, kernel_constraint = unit_norm( axis=-2 ),
-                 name='outlierTrans_new', padding = 'same' )(rf)
-        bf = BatchNormalization( axis=-1, name='bnorm_new', center=False, scale=False )(rf)
-        devf5d = modelCore.NestedWindowAverageFeatExtrator(window_size_list=self.window_size_list,
-                                                           output_mode='5d', minus_original=True, name='nestedAvgFeatex_new')( bf )
-        apply_normalization=True
-        if ( apply_normalization ) :
-            sigma = modelCore.GlobalStd2D(name='glbStd_new')(bf)
-            sigma5d = Lambda( lambda t : K.expand_dims( t, axis=1 ), name='expTime_new')( sigma )
-            devf5d = Lambda( lambda vs : K.abs(vs[0]/vs[1]), name='divStd_new' )([devf5d, sigma5d])
-        
-        init_tensor=MyStartVariable()(devf5d)
-        t=self.encoder.encoders(devf5d)
-        t=self.decoder.decoders(init_tensor,t)
-        t=Lambda(lambda t:t[:,0,...],name="lambda_out")(t)
-        pred_out=self.Last_Layer_0903(t)
-        model=Model( inputs=img_in, outputs=pred_out, name='sigNet')
-        
-        model.load_weights(self.weight_file,by_name=True)
-        return model
-    
-    def get_model_0801(self):
-        img_in = Input(shape=(None,None,3), name='img_in')
-        Featex=self.get_Featex()
-        rf=Featex(img_in)
-        #t=Conv2D(128,kernel_size=(3,3),strides=(2,2),activation="relu",padding="same",name="step1_0801")(rf)
-        t=Conv2D(128,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step2_0801")(rf)
-        #t=Conv2D(256,kernel_size=(3,3),strides=(2,2),activation="relu",padding="same",name="step3_0801")(t)
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step4_0801")(t)
-
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",dilation_rate=2,name="step5_0801")(t)
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",dilation_rate=4,name="step6_0801")(t)
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",dilation_rate=8,name="step7_0801")(t)
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",dilation_rate=16,name="step8_0801")(t)
-
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step9_0801")(t)
-        t=Conv2D(256,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step10_0801")(t)
-
-        #t=keras.layers.Conv2DTranspose(128,kernel_size=4,strides=2,padding="same",name="step11_0801")(t)
-        t=Conv2D(128,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step12_0801")(t)
-        #t=keras.layers.Conv2DTranspose(64,kernel_size=4,strides=2,padding="same",name="step13_0801")(t)
-        t=Conv2D(32,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step14_0801")(t)
-        t=Conv2D(8,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step15_0801")(t)
-        t=Conv2D(1,kernel_size=(3,3),strides=(1,1),activation="relu",padding="same",name="step16_0801")(t)
-        
-        model=Model( inputs=img_in, outputs=t, name='sigNet_0801')
-        print (model.summary( line_length=120 ))
-        model.load_weights(self.weight_file,by_name=True)
-        return model
-
-    def get_model_0726(self): #2 encoders and 8 headers
-        img_in = Input(shape=(None,None,3), name='img_in')
-        Featex=self.get_Featex()
-        rf=Featex(img_in)
-        rf = Conv2D( 64, (1,1), activation=None, use_bias=False, kernel_constraint = unit_norm( axis=-2 ),
-                 name='outlierTrans_new', padding = 'same' )(rf)
-        bf = BatchNormalization( axis=-1, name='bnorm_new', center=False, scale=False )(rf)
-        devf5d = modelCore.NestedWindowAverageFeatExtrator(window_size_list=self.window_size_list,
-                                                           output_mode='5d', minus_original=True, name='nestedAvgFeatex_new')( bf )
-        apply_normalization=True
-        if ( apply_normalization ) :
-            sigma = modelCore.GlobalStd2D(name='glbStd_new')(bf)
-            sigma5d = Lambda( lambda t : K.expand_dims( t, axis=1 ), name='expTime_new')( sigma )
-            devf5d = Lambda( lambda vs : K.abs(vs[0]/vs[1]), name='divStd_new' )([devf5d, sigma5d])
-        
-        
-        t=self.encoder.encoders(devf5d)
-        
-        def helper(x):
-            s=tf.shape(x)
-            sc=x.shape
-            t=tf.transpose(x,(0,2,3,1,4))
-            t=tf.reshape(x,shape=(s[0],s[2],s[3],sc[1]*sc[4]))
-            return t
-        t=Lambda(helper,name="lambda_out")(t)
-        pred_out=self.Last_Layer_0726(t)
-
-        
-        model=Model( inputs=img_in, outputs=pred_out, name='sigNet')
-        model.load_weights(self.weight_file,by_name=True)
-        return model
+'''
